@@ -1,9 +1,9 @@
 # TxSpector
 TxSpector is the first generic logic-driven framework for uncovering attacks on Ethereum Blockchain from transactions.
 
-## Revised Go-Ethereum 
+## Revised Go-Ethereum
 ### Generate transaction trace by replaying transactions in the Ethereum Blockchain
-To collect transaction trace, we revised the offcial [Go-Ethereum EVM](https://github.com/ethereum/go-ethereum) to record transaction info, such as its date, sender, reciver, and so on. To obtain all the transaction traces in Ethereum Blockchain, you can just replay all the transactions by syncing. For only one transaction, you can simulate the interaction with the geth client. The traces will be recorded in the MongoDB dataset named "geth" automatically. 
+To collect transaction trace, we revised the offcial [Go-Ethereum EVM](https://github.com/ethereum/go-ethereum) to record transaction info, such as its date, sender, reciver, and so on. To obtain all the transaction traces in Ethereum Blockchain, you can just replay all the transactions by syncing. For only one transaction, you can simulate the interaction with the geth client. The traces will be recorded in the MongoDB dataset named "geth" automatically.
 
 ## Revised files
 *go-ethereum/mongo/mongodb.go initializes the mongodb and creates some global data, such as transaction related metadata. <br />
@@ -14,7 +14,7 @@ To collect transaction trace, we revised the offcial [Go-Ethereum EVM](https://g
 *go-ethereum/core/vm/instructions.go, every opcode related function is changed to return the results that we need for the furture anlysis, which are the arguments of the opcode. <br />
 *go-ethereum/core/vm/tx_pool.go stores the left transaction traces into the "geth" mongodb dataset. <br />
 
-# Detector 
+# Detector
 
 ## Requirements
 Modules needed from python are put in the detector/requirements.txt. In addition, we need souffle. Other versions may also work.
@@ -31,7 +31,7 @@ With the traces being collected, TxSpector can parse the trace into the EFG (exe
 ./detector/bin/analyze_geth.sh 0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b.txt facts
 ```
 
-Before detecting the attacks, we need to generate a facts "sc_addr.facts" by ourself, in which we only need to fill the receiver smart contract address. This facts file will be used to detect reentrancy attack. You can use the browser Etherscan [0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b](https://etherscan.io/tx/0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b) to obtain the info or use the go-ethereum to get the related info. 
+Before detecting the attacks, we need to generate a facts "sc_addr.facts" by ourself, in which we only need to fill the receiver smart contract address. This facts file will be used to detect reentrancy attack. You can use the browser Etherscan [0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b](https://etherscan.io/tx/0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b) to obtain the info or use the go-ethereum to get the related info.
 
 
 
@@ -54,3 +54,23 @@ Now we have the final results in file ReenResult.csv that have some metadata for
    src/tac_efg.py generates a IR (Intermediate Representation) based EFG <br />
    src/exporter.py exports the needed facts <br />
    other files are helpers to analyze <br />
+
+
+
+## Usage
+
+1Reentrancy.dl  => ReenResult.csv
+
+2UncheckedCall.dl => Step1.csv, Step2.csv, Step3.csv
+
+3FailedSend.dl => FailedSendResult.csv
+
+4TimestampDependence.dl => TimestampDependenceResult.csv
+
+5UnsecuredBalance.dl => Situation1.csv
+
+6MisuseOfOrigin.dl => MisuseOriginResult.csv
+
+7Suicidal.dl => SuicidalResult.csv
+
+8Securify-Reentrancy.dl  => 8Securify-Reentrancy.dl .csv / GasConstantReen.csv

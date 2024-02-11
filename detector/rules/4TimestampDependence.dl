@@ -33,8 +33,7 @@
 #include "opcode.dl"
 
 
-// Filter and obtain the pairs (x, y) with the dependency relationship 
-.decl depends(x:Variable, y:Variable)
+// Filter and obtain the pairs (x, y) with the dependency relationship
 .decl depends(x:Variable, y:Variable)
 depends(x, x) :-
   use(x, _, _, _, _, _).
