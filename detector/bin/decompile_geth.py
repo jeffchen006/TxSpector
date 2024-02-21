@@ -222,6 +222,7 @@ def analyzeTx(txHash):
     os.remove("SuicidalResult.csv")
     os.remove("GasDepReen.csv")
     os.remove("GasConstantReen.csv")
+    os.remove("Situation1.csv")
 
     return result
 

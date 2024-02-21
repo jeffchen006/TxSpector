@@ -37,3 +37,6 @@ node_modules/
 
 # script-generated bats test files
 *.generated.bats
+
+example/facts/*
+*.csv
