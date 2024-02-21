@@ -105,7 +105,7 @@ def analyzeTx(txHash):
         f.write("\n")
 
     result = []
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/1Reentrancy.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/1Reentrancy.dl"
     # run souffle command at root directory
     import subprocess
     subprocess.run(souffle_command, shell=True, check=True)
@@ -119,7 +119,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/2UncheckedCall.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/2UncheckedCall.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from Step3.csv
     with open("Step3.csv", "r") as f:
@@ -129,7 +129,7 @@ def analyzeTx(txHash):
         else:
             result.append(False)
 
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/3FailedSend.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/3FailedSend.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from FailedSendResult.csv
     with open("FailedSendResult.csv", "r") as f:
@@ -140,7 +140,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/4TimestampDependence.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/4TimestampDependence.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from TimestampDependenceResult.csv
     with open("TimestampDependenceResult.csv", "r") as f:
@@ -150,7 +150,7 @@ def analyzeTx(txHash):
         else:
             result.append(False)
 
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/5UnsecuredBalance.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/5UnsecuredBalance.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from Step3.csv
     with open("Step3.csv", "r") as f:
@@ -161,7 +161,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/6MisuseOfOrigin.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/6MisuseOfOrigin.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from MisuseOriginResult.csv
     with open("MisuseOriginResult.csv", "r") as f:
@@ -171,7 +171,7 @@ def analyzeTx(txHash):
         else:
             result.append(False)
 
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/7Suicidal.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/7Suicidal.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from SuicidalResult.csv
     with open("SuicidalResult.csv", "r") as f:
@@ -182,7 +182,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 24 -F example/facts ./detector/rules/8Securify-Reentrancy.dl"
+    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/8Securify-Reentrancy.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from GasDepReen.csv and GasConstantReen.csv
     with open("GasDepReen.csv", "r") as f:
