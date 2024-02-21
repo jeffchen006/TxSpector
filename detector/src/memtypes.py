@@ -391,6 +391,35 @@ class Variable(ssle, Location):
         """Return the b'th byte of v."""
         return (v >> ((cls.SIZE - b) * 8)) & 0xFF
 
+    @classmethod
+    def SHL(cls, s: int, v: int) -> int:
+        """Logical shift left."""
+        if s >= 256:
+            return 0
+        else:
+            UINT256_MAX = 2**256 - 1
+            ret = (v << s) & UINT256_MAX
+            return ret
+
+
+    @classmethod
+    def SHR(cls, s: int, v: int) -> int:
+        """Logical shift right."""
+        if s >= 256:
+            return 0
+        else:
+            UINT256_MAX = 2**256 - 1
+            ret = (v >> s) & UINT256_MAX
+            return ret
+
+
+    @classmethod
+    def SAR(cls, s: int, v: int) -> int:
+        """Arithmetic shift right."""
+        return cls.twos_comp(v) >> s
+
+
+
 
 class MetaVariable(Variable):
     """A Variable to stand in for Variables."""

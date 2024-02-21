@@ -109,10 +109,23 @@ class EFGTsvExporter(Exporter, patterns.DynamicVisitor):
         for block in self.source.blocks:
             for op in block.tac_ops:
                 ops.append((hex(op.pc), op.opcode.name, op.loc))
+                if op.opcode.name == "STATICCALL":
+                    print("now is the time")
+
+                if op.opcode.name == "CALL":
+                    print("now is the time")
+
+
                 if op.opcode.name in out_opcodes:
                     if op.has_lhs():
-                        output_tuple = tuple([hex(op.pc)] + [arg.value.name for arg in op.args] +
-                                             [op.lhs.name] + [op.loc] + [op.call_depth] + [op.call_number])
+                        if op.opcode.name == "STATICCALL" or op.opcode.name == "DELEGATECALL":
+                            output_tuple = tuple([hex(op.pc)] + [op.args[0].value.name, op.args[1].value.name, \
+                                                        0, op.args[2].value.name, op.args[3].value.name, \
+                                                        op.args[4].value.name, op.args[5].value.name, ] \
+                                                        + [op.lhs.name] + [op.loc] + [op.call_depth] + [op.call_number])
+                        else:
+                            output_tuple = tuple([hex(op.pc)] + [arg.value.name for arg in op.args] +
+                                                [op.lhs.name] + [op.loc] + [op.call_depth] + [op.call_number])
                     else:
                         output_tuple = tuple([hex(op.pc)] + [arg.value.name for arg in op.args] +
                                              [op.loc] + [op.call_depth] + [op.call_number])
@@ -123,6 +136,8 @@ class EFGTsvExporter(Exporter, patterns.DynamicVisitor):
 
         # generate all the needed opcode.facts
         for opcode in op_rels:
+            # if opcode == "STATICCALL":
+            #     print("now is the time")
             self.__generate("op_{}.facts".format(opcode), op_rels[opcode])
 
     def __generate_def_use_value(self):
@@ -182,7 +197,7 @@ class EFGTsvExporter(Exporter, patterns.DynamicVisitor):
 
         # Generate facts for the interested opcodes, such as MSTORE ...
         self.__generate_blocks_ops(out_opcodes)
-        
+
         # Generate facts for the def.facts (where the V1 V2 ... is defined)
         # use.fats stores where the V1 V2 ... used; value stores what the V1 V2 ... values are
         # Previous code

@@ -44,119 +44,217 @@ import src.exporter as exporter
 import src.tac_efg as tac_efg
 import src.settings as settings
 
-# Version string to display with -v
-VERSION = """\
-+------------------------------+
-| TxSpector Detector v0.0.1     |
-| (c) The Ohio State University |
-+------------------------------+\
-"""
 
 
-# Define a version() function in case we want dynamic version strings later
-def version():
-    return VERSION
+
+def analyzeTx(txHash):
+    import json
+    result_map = {}
+    with open("result_map.json", "r") as f:
+        result_map = json.load(f)
+
+    if txHash in result_map:
+        return result_map[txHash]
 
 
-# Configure argparse
-parser = argparse.ArgumentParser(
-    description="An EVM bytecode disassembly that generates"
-                "three-address code for program analysis.")
+    infile = "example/{}.txt".format(txHash)
+    output_dir = "example/facts"
+    efg = None
+    # Build TAC EFG from input file
+    try:
+        logging.info("Reading from '%s'.", infile)
+        lines = None
+        with open(infile, 'r') as f:
+            lines = f.readlines()
+        efg = tac_efg.TACGraph.from_opcode(lines)
+        logging.info("Initial EFG generation completed.")
 
-parser.add_argument("-t",
-                    "--tsv",
-                    nargs="?",
-                    const="",
-                    metavar="DIR",
-                    default=None,
-                    help="generate tab-separated .facts files for Souffle "
-                         "and write files to the specified directory, which "
-                         "will be recursively created if it does not exist "
-                         "(current working directory by default).")
+    # Catch a Control-C and exit with UNIX failure status 1
+    except KeyboardInterrupt:
+        logging.critical("\nInterrupted by user")
+        sys.exit(1)
 
-parser.add_argument("-o",
-                    "--opcodes",
-                    nargs="*",
-                    default=[],
-                    metavar="OPCODE",
-                    help="If producing tsv output, also include relations "
-                         "encoding all occurrences of the specified "
-                         "list of opcodes. Opcode X will be stored in "
-                         "op_X.facts.")
 
-parser.add_argument("-v",
-                    "--verbose",
-                    action="store_true",
-                    help="emit verbose debug output to stderr.")
+    opcodes = [
+        'CREATE', 'BALANCE', 'CALLER', 'CALLVALUE', 'STOP', \
+        'RETURN', 'REVERT', 'ORIGIN', 'CALLDATALOAD', 'EQ', \
+        'TIMESTAMP', 'NUMBER', 'DIFFICULTY', 'COINBASE', 'BLOCKHASH', \
+        'GASLIMIT', 'EXTCODESIZE', 'SELFDESTRUCT', 'JUMPI', 'JUMP', \
+        'JUMPDEST', 'SSTORE', 'SLOAD', 'CALL', 'DELEGATE', 'CALLCODE', 'STATICCALL'
+    ]
+    exporter.EFGTsvExporter(efg).export(output_dir=output_dir,
+                                        out_opcodes=opcodes)
 
-parser.add_argument("-vv",
-                    "--prolix",
-                    action="store_true",
-                    help="higher verbosity level, including extra debug "
-                         "messages from dataflow analysis and elsewhere.")
 
-parser.add_argument("-n",
-                    "--no_out",
-                    action="store_true",
-                    help="do not output decompiled graph.")
+    import os
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    path1 = os.path.dirname(SCRIPT_DIR)
+    path2 = os.path.dirname(path1)
+    sys.path.append(path1)
+    sys.path.append(path2)
 
-parser.add_argument("-V",
-                    "--version",
-                    action="store_true",
-                    help="show program's version number and exit.")
+    from crawlPackage.crawlEtherscan import CrawlEtherscan
+    ce = CrawlEtherscan()
+    sc_addr = ce.Tx2SrcAddr(txHash)
+    # store sc_addr in output_dir/.facts
 
-parser.add_argument("infile",
-                    nargs="?",
-                    type=argparse.FileType("r"),
-                    default=sys.stdin,
-                    help="file from which decompiler input should be read "
-                         "(stdin by default).")
+    with open("{}/sc_addr.facts".format(output_dir), "w") as f:
+        f.write(sc_addr)
+        if not sc_addr.startswith("0x"):
+            sys.exit(1)
+        f.write("\n")
 
-parser.add_argument("outfile",
-                    nargs="?",
-                    type=argparse.FileType("w"),
-                    default=sys.stdout,
-                    help="file to which decompiler output should be written "
-                         "(stdout by default).")
+    result = []
+    souffle_command = "souffle -F example/facts ./detector/rules/1Reentrancy.dl"
+    # run souffle command at root directory
+    import subprocess
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from ReenResult.csv
+    with open("ReenResult.csv", "r") as f:
+        content = f.read()
+        # if content is not empty, print yes
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
 
-# Parse the arguments.
-args = parser.parse_args()
 
-# Set up logger, with appropriate log level depending on verbosity.
-log_level = logging.WARNING
-if args.prolix:
-    log_level = logging.DEBUG
-elif args.verbose:
-    log_level = logging.INFO
-logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
+    souffle_command = "souffle -F example/facts ./detector/rules/2UncheckedCall.dl"
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from Step3.csv
+    with open("Step3.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
 
-# Handle --version
-if args.version:
-    sys.exit(1)
+    souffle_command = "souffle -F example/facts ./detector/rules/3FailedSend.dl"
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from FailedSendResult.csv
+    with open("FailedSendResult.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
 
-# Always show version for log_level >= LOW
-logging.info("\n" + version())
 
-# Build TAC EFG from input file
-try:
-    logging.info("Reading from '%s'.", args.infile.name)
-    efg = tac_efg.TACGraph.from_opcode(args.infile)
-    logging.info("Initial EFG generation completed.")
+    souffle_command = "souffle -F example/facts ./detector/rules/4TimestampDependence.dl"
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from TimestampDependenceResult.csv
+    with open("TimestampDependenceResult.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
 
-# Catch a Control-C and exit with UNIX failure status 1
-except KeyboardInterrupt:
-    logging.critical("\nInterrupted by user")
-    sys.exit(1)
+    souffle_command = "souffle -F example/facts ./detector/rules/5UnsecuredBalance.dl"
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from Step3.csv
+    with open("Step3.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
 
-# Generate output using the requested exporter(s)
-# blocks, textual version of efg
-if not args.no_out:
-    logging.info("Writing string output.")
-    print(exporter.EFGStringExporter(efg).export(), file=args.outfile)
 
-# Generate facts file
-if args.tsv is not None:
-    logging.info("Writing TSV output.")
-    exporter.EFGTsvExporter(efg).export(output_dir=args.tsv,
-                                        out_opcodes=args.opcodes)
+    souffle_command = "souffle -F example/facts ./detector/rules/6MisuseOfOrigin.dl"
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from MisuseOriginResult.csv
+    with open("MisuseOriginResult.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
 
+    souffle_command = "souffle -F example/facts ./detector/rules/7Suicidal.dl"
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from SuicidalResult.csv
+    with open("SuicidalResult.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
+
+
+    souffle_command = "souffle -F example/facts ./detector/rules/8Securify-Reentrancy.dl"
+    subprocess.run(souffle_command, shell=True, check=True)
+    # read contents from GasDepReen.csv and GasConstantReen.csv
+    with open("GasDepReen.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
+
+    with open("GasConstantReen.csv", "r") as f:
+        content = f.read()
+        if content:
+            result.append(True)
+        else:
+            result.append(False)
+
+    # load the file result_map.json which is a dictionary
+    import json
+    result_map = {}
+    with open("result_map.json", "r") as f:
+        result_map = json.load(f)
+
+    if txHash not in result_map:
+        result_map[txHash] = result
+        with open("result_map.json", "w") as f:
+            json.dump(result_map, f)
+
+
+    # remove all .csv files
+    os.remove("ReenResult.csv")
+    os.remove("Step1.csv")
+    os.remove("Step2.csv")
+    os.remove("FailedSendResult.csv")
+    os.remove("TimestampDependenceResult.csv")
+    os.remove("Step3.csv")
+    os.remove("MisuseOriginResult.csv")
+    os.remove("SuicidalResult.csv")
+    os.remove("GasDepReen.csv")
+    os.remove("GasConstantReen.csv")
+
+    return result
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    result_map = {}
+    import glob
+    txt_files = glob.glob('example/*.txt')
+    print(txt_files)
+    for txt_file in txt_files:
+        try:
+            txHash = txt_file.split("/")[-1].split(".")[0]
+            print("start analyzing tx: ", txHash)
+            result = analyzeTx(txHash)
+            result_map[txHash] = result
+        except Exception as e:
+            print(e)
+            continue
+
+
+
+    # result = analyzeTx("0x0fc6d2ca064fc841bc9b1c1fad1fbb97bcea5c9a1b2b66ef837f1227e06519a6")
+    result_vec = ["1Reentrancy", "2UncheckedCall", "3FailedSend", "4TimestampDependence", "5UnsecuredBalance", "6MisuseOfOrigin", "7Suicidal", "8Securify-Reentrancy-GasDepReen", "8Securify-Reentrancy-GasConstantReen"]
+
+    print("The following vulnerabilities are found:")
+    print(result_vec)
+    # print(result)
+
+    for txHash in result_map:
+        print(txHash)
+        print(result_map[txHash])

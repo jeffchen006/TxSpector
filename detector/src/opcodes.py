@@ -71,7 +71,9 @@ class OpCode:
     def is_kind_one(self) -> bool:
         special = {ADDRESS.name, ORIGIN.name, CALLER.name, CALLVALUE.name, CALLDATASIZE.name,
                    CODESIZE.name, GASPRICE.name, RETURNDATASIZE.name, COINBASE.name, TIMESTAMP.name,
-                   NUMBER.name, DIFFICULTY.name, GASLIMIT.name, PC.name, MSIZE.name, GAS.name}
+                   NUMBER.name, DIFFICULTY.name, GASLIMIT.name, CHAINID.name, SELFBALANCE.name,
+                    BASEFEE.name,
+                   PC.name, MSIZE.name, GAS.name}
         return self.name in special
 
     # Special cases for kind two, such as CALLDATALOAD
@@ -137,7 +139,7 @@ class OpCode:
     def is_arithmetic(self) -> bool:
         """Predicate: opcode's result can be calculated from its inputs alone."""
         return (ADD.code <= self.code <= SIGNEXTEND.code) or \
-               (LT.code <= self.code <= BYTE.code)
+               (LT.code <= self.code <= SAR.code)
 
     def is_memory(self) -> bool:
         """Predicate: opcode operates on memory"""
@@ -154,7 +156,7 @@ class OpCode:
     def alters_flow(self) -> bool:
         """Predicate: opcode alters EVM control flow."""
         return (self.code in (JUMP.code, JUMPI.code,)) or self.possibly_halts()
-    
+
     def is_exception(self) -> bool:
         """Predicate: opcode causes the EVM to throw an exception."""
         return (self.code in (THROW.code, THROWI.code, REVERT.code)) \
@@ -211,6 +213,9 @@ OR = OpCode("OR", 0x17, 2, 1)
 XOR = OpCode("XOR", 0x18, 2, 1)
 NOT = OpCode("NOT", 0x19, 1, 1)
 BYTE = OpCode("BYTE", 0x1a, 2, 1)
+SHL = OpCode("SHL", 0x1b, 2, 1)
+SHR = OpCode("SHR", 0x1c, 2, 1)
+SAR = OpCode("SAR", 0x1d, 2, 1)
 
 SHA3 = OpCode("SHA3", 0x20, 2, 1)
 
@@ -228,6 +233,10 @@ CODECOPY = OpCode("CODECOPY", 0x39, 3, 0)
 GASPRICE = OpCode("GASPRICE", 0x3a, 0, 1)
 EXTCODESIZE = OpCode("EXTCODESIZE", 0x3b, 1, 1)
 EXTCODECOPY = OpCode("EXTCODECOPY", 0x3c, 4, 0)
+RETURNDATASIZE = OpCode("RETURNDATASIZE", 0x3d, 0, 1)
+RETURNDATACOPY = OpCode("RETURNDATACOPY", 0x3e, 3, 0)
+EXTCODEHASH = OpCode("EXTCODEHASH", 0x3f, 1, 1)
+
 
 # Block Information
 BLOCKHASH = OpCode("BLOCKHASH", 0x40, 1, 1)
@@ -236,6 +245,9 @@ TIMESTAMP = OpCode("TIMESTAMP", 0x42, 0, 1)
 NUMBER = OpCode("NUMBER", 0x43, 0, 1)
 DIFFICULTY = OpCode("DIFFICULTY", 0x44, 0, 1)
 GASLIMIT = OpCode("GASLIMIT", 0x45, 0, 1)
+CHAINID = OpCode("CHAINID", 0x46, 0, 1)
+SELFBALANCE = OpCode("SELFBALANCE", 0x47, 0, 1)
+BASEFEE = OpCode("BASEFEE", 0x48, 0, 1)
 
 # Stack, Memory, Storage, Flow
 POP = OpCode("POP", 0x50, 1, 0)

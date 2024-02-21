@@ -28,7 +28,7 @@ With the traces being collected, TxSpector can parse the trace into the EFG (exe
 ./bin/analyze_geth.sh  trace_file  facts_dir
 ```
 ```
-./detector/bin/analyze_geth.sh 0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b.txt facts
+./detector/bin/analyze_geth.sh example/0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b.txt facts
 ```
 
 Before detecting the attacks, we need to generate a facts "sc_addr.facts" by ourself, in which we only need to fill the receiver smart contract address. This facts file will be used to detect reentrancy attack. You can use the browser Etherscan [0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b](https://etherscan.io/tx/0x37085f336b5d3e588e37674544678f8cb0fc092a6de5d83bd647e20e5232897b) to obtain the info or use the go-ethereum to get the related info.
@@ -74,3 +74,56 @@ Now we have the final results in file ReenResult.csv that have some metadata for
 7Suicidal.dl => SuicidalResult.csv
 
 8Securify-Reentrancy.dl  => 8Securify-Reentrancy.dl .csv / GasConstantReen.csv
+
+
+179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215
+
+6465080288632887992935785017466142041404191740450231097049595941908663756058008002954484894227235016850239840191280456664183552414061888320434790749718200197151758369117136656398238073201602645534608690999005576107431060412895014698698579951235097826400417372931126123211128042247125007061588114874296665196116381868282817597016550943368878418472137143190076141545767133991730938137977222904073062749399035392185775851860000951790351041733654457243328659296361258953376911461437058545893121962231071280827838980274754543694518738747215045603281448148972411620013120618110485085703611163580344232935300309603613262608762325479780373272565001431976550239562555312795927290179041585775969444647594478272512
+
+
+
+
+
+    # 1Reentrancy.dl
+    # ==> ReenResult  yes
+        # sload_loc: The location (bytecode position) of the SLOAD operation.
+        # jumpi_loc: The location of the JUMPI operation that is conditionally dependent on the SLOAD operation.
+        # sload_depth: The call depth at which the SLOAD operation occurs.
+        # sload_call_number: The call number (sequence) associated with the SLOAD operation's execution context.
+        # sstore_loc: The location of the SSTORE operation.
+        # sstore_depth: The call depth at which the SSTORE operation occurs.
+        # sstore_cn: The call number associated with the SSTORE operation's execution context.
+        # sstore_sc_addr: The smart contract address associated with the `SSTORE
+        # sload_sc_addr: The smart contract address associated with the SLOAD operation.
+
+
+    # 2UncheckedCall.dl
+    # ==> Step1
+    # ==> Step2
+    # ==> Step3   yes
+
+
+    # 3FailedSend.dl
+    # ==> FailedSendResult   yes
+
+
+    # 4TimestampDependence.dl
+    # ==> TimestampDependenceResult  yes
+
+
+    # 5UnsecuredBalance.dl
+    # ==> Situation1
+    # ==> Step1
+    # ==> Step3   yes
+
+    # 6MisuseOfOrigin.dl
+    # ==> Step1
+    # ==> MisuseOriginResult  yes
+
+    # 7Suicidal.dl
+    # ==> Step1
+    # ==> SuicidalResult    yes
+
+    # 8Securify-Reentrancy.dl
+    # ==> GasDepReen   yes
+    # ==> GasConstantReen     yes

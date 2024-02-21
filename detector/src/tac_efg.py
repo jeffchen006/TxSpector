@@ -144,7 +144,7 @@ class TACGraph(cfg.ControlFlowGraph):
                         else:
                             original_opcodes.append(evm_efg.EVMOp(int(args[0]), opcodes.opcode_by_name(args[1]), int(args[2]), None))
 
-        # Obtain evm opcode based EFG firstly 
+        # Obtain evm opcode based EFG firstly
         basic_blocks = evm_efg.blocks_from_ops(original_opcodes)
         return cls(basic_blocks)
 
@@ -340,7 +340,12 @@ class TACBasicBlock(evm_efg.EVMBasicBlock):
         """
         Propagate and fold constants through the arithmetic TAC instructions in this block.
         """
+        isVerbose = True
         for op in self.tac_ops:
+            if isVerbose:
+                args_value = [str(arg) for arg in op.args]
+                print("APPLY OPERATION - pc: ", op.pc, "opcode: ", op.opcode, "args: ", args_value)
+
             if op.opcode == opcodes.CONST:
                 op.lhs.values = op.args[0].value.values
 
@@ -390,10 +395,15 @@ class TACBasicBlock(evm_efg.EVMBasicBlock):
 
             elif op.opcode.is_arithmetic():
                 if op.constant_args() or (op.constrained_args() and use_sets):
-                    rhs = [arg.value for arg in op.args] 
+                    rhs = [arg.value for arg in op.args]
                     op.lhs.values = mem.Variable.arith_op(op.opcode.name, rhs).values
+                    print("\t lhs: ", op.lhs.values)
+
                 elif not op.lhs.is_unconstrained:
                     op.lhs.widen_to_top()
+                    print("\t lhs: ", op.lhs.values)
+
+
 
 
 class TACOp(patterns.Visitable):
@@ -734,10 +744,14 @@ class Destackifier:
             for site in new_var.def_sites:
                 site.pc = op.pc
 
+        if op.opcode == opcodes.STATICCALL:
+            print("now is the time")
+            
         # Generate the appropriate TAC operation.
         # Special cases first, followed by the fallback to generic instructions.
         # Although the opcode is PUSH, vandal still marks it as CONST to do arithemetic operations.
         if op.opcode.is_push():
+            # new_var = mem.Variable(values=[op.value], name=new_var.name)
             args = [TACArg(var=mem.Variable(values=[op.value], name="C"))]
             inst = TACAssignOp(new_var, opcodes.CONST, args, op.pc, print_name=False)
         elif op.opcode.is_missing():
@@ -813,5 +827,8 @@ class Destackifier:
         inst.loc = op.loc
         inst.call_depth = op.call_depth
         inst.call_number = op.call_number
+
+        args_values = [str(arg.value) for arg in args]
+        print("pc: ", op.pc, "opcode: ", op.opcode, "args: ", args_values, "new_var: ", str(new_var))
 
         self.ops.append(inst)
