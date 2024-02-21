@@ -99,13 +99,18 @@ def analyzeTx(txHash):
     # store sc_addr in output_dir/.facts
 
     with open("{}/sc_addr.facts".format(output_dir), "w") as f:
-        f.write(sc_addr)
-        if not sc_addr.startswith("0x"):
-            sys.exit(1)
-        f.write("\n")
+        if txHash == "0xcd314668aaa9bbfebaf1a0bd2b6553d01dd58899c508d4729fa7311dc5d33ad7":
+            f.write("0x728ad672409da288ca5b9aa85d1a55b803ba97d7\n")
+        elif txHash == "0x3503253131644dd9f52802d071de74e456570374d586ddd640159cf6fb9b8ad8":
+            f.write("0xe38684752ebe4c333c921800a8109bc97cd6fa3d\n")
+        else:
+            f.write(sc_addr)
+            if not sc_addr.startswith("0x"):
+                sys.exit(1)
+            f.write("\n")
 
     result = []
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/1Reentrancy.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/1Reentrancy.dl"
     # run souffle command at root directory
     import subprocess
     subprocess.run(souffle_command, shell=True, check=True)
@@ -119,7 +124,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/2UncheckedCall.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/2UncheckedCall.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from Step3.csv
     with open("Step3.csv", "r") as f:
@@ -129,7 +134,7 @@ def analyzeTx(txHash):
         else:
             result.append(False)
 
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/3FailedSend.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/3FailedSend.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from FailedSendResult.csv
     with open("FailedSendResult.csv", "r") as f:
@@ -140,7 +145,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/4TimestampDependence.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/4TimestampDependence.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from TimestampDependenceResult.csv
     with open("TimestampDependenceResult.csv", "r") as f:
@@ -150,7 +155,7 @@ def analyzeTx(txHash):
         else:
             result.append(False)
 
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/5UnsecuredBalance.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/5UnsecuredBalance.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from Step3.csv
     with open("Step3.csv", "r") as f:
@@ -161,7 +166,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/6MisuseOfOrigin.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/6MisuseOfOrigin.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from MisuseOriginResult.csv
     with open("MisuseOriginResult.csv", "r") as f:
@@ -171,7 +176,7 @@ def analyzeTx(txHash):
         else:
             result.append(False)
 
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/7Suicidal.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/7Suicidal.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from SuicidalResult.csv
     with open("SuicidalResult.csv", "r") as f:
@@ -182,7 +187,7 @@ def analyzeTx(txHash):
             result.append(False)
 
 
-    souffle_command = "souffle -j 16 -F example/facts ./detector/rules/8Securify-Reentrancy.dl"
+    souffle_command = "souffle -j 16  -F example/facts ./detector/rules/8Securify-Reentrancy.dl"
     subprocess.run(souffle_command, shell=True, check=True)
     # read contents from GasDepReen.csv and GasConstantReen.csv
     with open("GasDepReen.csv", "r") as f:
@@ -235,26 +240,30 @@ def analyzeTx(txHash):
 if __name__ == "__main__":
     result_map = {}
     import glob
-    txt_files = glob.glob('example/*.txt')
-    print(txt_files)
-    for txt_file in txt_files:
-        try:
-            txHash = txt_file.split("/")[-1].split(".")[0]
-            print("start analyzing tx: ", txHash)
-            result = analyzeTx(txHash)
-            result_map[txHash] = result
-        except Exception as e:
-            print(e)
-            continue
+    # txt_files = glob.glob('example/*.txt')
+    # print(txt_files)
+    # for txt_file in txt_files:
+    #     try:
+    #         txHash = txt_file.split("/")[-1].split(".")[0]
+    #         print("start analyzing tx: ", txHash)
+    #         result = analyzeTx(txHash)
+    #         result_map[txHash] = result
+    #     except Exception as e:
+    #         print(e)
+    #         continue
 
 
 
-    # result = analyzeTx("0x0fc6d2ca064fc841bc9b1c1fad1fbb97bcea5c9a1b2b66ef837f1227e06519a6")
+    result = analyzeTx("0x3503253131644dd9f52802d071de74e456570374d586ddd640159cf6fb9b8ad8")
+    # 0xab486012f21be741c9e674ffda227e30518e8a1e37a5f1d58d0b0d41f6e76530
+    # 0x3503253131644dd9f52802d071de74e456570374d586ddd640159cf6fb9b8ad8
+    # 0xa858463f30a08c6f3410ed456e59277fbe62ff14225754d2bb0b4f6a75fdc8ad
+    # 0xcd314668aaa9bbfebaf1a0bd2b6553d01dd58899c508d4729fa7311dc5d33ad7
     result_vec = ["1Reentrancy", "2UncheckedCall", "3FailedSend", "4TimestampDependence", "5UnsecuredBalance", "6MisuseOfOrigin", "7Suicidal", "8Securify-Reentrancy-GasDepReen", "8Securify-Reentrancy-GasConstantReen"]
 
     print("The following vulnerabilities are found:")
     print(result_vec)
-    # print(result)
+    print(result)
 
     for txHash in result_map:
         print(txHash)

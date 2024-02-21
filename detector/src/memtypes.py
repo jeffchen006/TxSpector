@@ -330,11 +330,25 @@ class Variable(ssle, Location):
         Return v, but with the high bit of its b'th byte extended all the way
         to the most significant bit of the output.
         """
-        pos = 8 * (b + 1)
-        mask = int("1" * ((cls.SIZE * 8) - pos) + "0" * pos, 2)
-        val = 1 if (v & (1 << (pos - 1))) > 0 else 0
+        # pos = 8 * (b + 1)
+        # mask = int("1" * ((cls.SIZE * 8) - pos) + "0" * pos, 2)
+        # val = 1 if (v & (1 << (pos - 1))) > 0 else 0
+        # ret = (v & mask) if (val == 0) else (v | ~mask)
 
-        return (v & mask) if (val == 0) else (v | ~mask)
+        ret2 = 0
+        if b <= 31:
+            testbit = b * 8 + 7
+            sign_bit = 1 << testbit
+            if v & sign_bit:
+                UINT_256_CEILING = 2**256
+                ret2 = v | (UINT_256_CEILING - sign_bit)
+            else:
+                ret2 = v & (sign_bit - 1)
+        else:
+            ret2 = v
+
+        return ret2
+
 
     @classmethod
     def LT(cls, l: int, r: int) -> int:

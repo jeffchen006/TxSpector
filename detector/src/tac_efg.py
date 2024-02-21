@@ -130,6 +130,8 @@ class TACGraph(cfg.ControlFlowGraph):
             if len(l.strip()) > 0:
                 # One example of the opcode line: 0; PUSH1; 0x64, which represents <PC; OPCODE NAME; ARGS>
                 args = l.strip().split(";")
+                if int(args[0]) == 9549:
+                    print("now is the time")
                 if args[2] == "":
                     original_opcodes.append(evm_efg.EVMOp(int(args[0]), opcodes.opcode_by_name(args[1]), None, None))
                 else:
@@ -141,8 +143,14 @@ class TACGraph(cfg.ControlFlowGraph):
                         if opcodes.opcode_by_name(args[1]).name == opcodes.SELFDESTRUCT.name:
                             addr = int(args[2], 0)
                             original_opcodes.append(evm_efg.EVMOp(int(args[0]), opcodes.opcode_by_name(args[1]), addr, None))
+                        elif opcodes.opcode_by_name(args[1]).name == opcodes.CREATE.name or \
+                                opcodes.opcode_by_name(args[1]).name == opcodes.CREATE2.name:
+                            addr = int(args[2], 0)
+                            evmOp = evm_efg.EVMOp(int(args[0]), opcodes.opcode_by_name(args[1]), addr, None)
+                            original_opcodes.append(evmOp)
                         else:
                             original_opcodes.append(evm_efg.EVMOp(int(args[0]), opcodes.opcode_by_name(args[1]), int(args[2]), None))
+
 
         # Obtain evm opcode based EFG firstly
         basic_blocks = evm_efg.blocks_from_ops(original_opcodes)
@@ -746,7 +754,7 @@ class Destackifier:
 
         if op.opcode == opcodes.STATICCALL:
             print("now is the time")
-            
+
         # Generate the appropriate TAC operation.
         # Special cases first, followed by the fallback to generic instructions.
         # Although the opcode is PUSH, vandal still marks it as CONST to do arithemetic operations.
